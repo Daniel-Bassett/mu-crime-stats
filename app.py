@@ -55,7 +55,6 @@ crime_options = crime_df.general_offense.value_counts().sort_values(ascending=Fa
 
 # end user selects crimes they are interested in
 crimes_filter = st.multiselect('Choose crime category', options=crime_options)
-st.write(crimes_filter)
 
 fig = create_map(crime_df, crimes_filter)
 
