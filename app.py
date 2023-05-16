@@ -111,7 +111,24 @@ def create_area(crime_df, crimes_filter, start_date, end_date, time_period, time
     return fig
 
 
+def create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_date):
+    # filter dataframe for crimes, locations, and dates from use input
+    crime_df = crime_df.query('general_offense.isin(@crimes_filter) and location_of_occurrence.isin(@locations_filter)')
+    crime_df = crime_df.query('time_started >= @start_date and time_started <= @end_date')
 
+    # rename column from size
+    crime_df = crime_df.groupby(['location_of_occurrence', 'general_offense'], as_index=False).size().sort_values(by='size', ascending=False)
+    crime_df = crime_df.rename(columns={'size': 'n_crimes'})
+    crime_df = crime_df.pivot(index='location_of_occurrence', columns='general_offense', values='n_crimes').fillna(0)
+    fig = px.imshow(crime_df)
+    fig.update_layout(width=800, 
+                      height=600, 
+                      title=f'Crime by Location - Heatmap', 
+                      title_x=0.5,
+                      xaxis_title='location',
+                      yaxis_title='crime category'
+                      )
+    return fig
 
 # load data 
 crime_df = load_data('data/crime-df.csv')
@@ -187,15 +204,6 @@ if selected == 'Crime by Location':
     # multiselect of available locations
     locations_filter = st.multiselect('Choose locations', options=location_options)
     
-    # filter dataframe for crimes, locations, and dates from use input
-    crime_df = crime_df.query('general_offense.isin(@crimes_filter) and location_of_occurrence.isin(@locations_filter)')
-    crime_df = crime_df.query('time_started >= @start_date and time_started <= @end_date')
+    fig = create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_date)
 
-    # rename column from size
-    crime_df = crime_df.groupby(['location_of_occurrence', 'general_offense'], as_index=False).size().sort_values(by='size', ascending=False)
-    crime_df = crime_df.rename(columns={'size': 'n_crimes'})
-    crime_df = crime_df.pivot(index='location_of_occurrence', columns='general_offense', values='n_crimes').fillna(0)
-    fig = px.imshow(crime_df
-                    )
-    
     st.plotly_chart(fig)
