@@ -6,29 +6,41 @@ from streamlit_option_menu import option_menu
 
 @st.experimental_memo
 def load_data(dir):
-    df = pd.read_csv(dir)
+    df = pd.read_csv(dir, parse_dates=['time_started'])
+    df['week'] = df.time_started.dt.week
     return df
 
-def create_map(crime_df, crimes_filter):
+# set population constant for calculating crime rate, based on 2021 figure
+POPULATION = 126853
+
+def create_map(crime_df, crimes_filter, start_date, end_date):
 
     # if the user selects specific crime types, filter them. Otherwise create map of all crimes combined
     if crimes_filter:
         crime_df = crime_df.query('general_offense.isin(@crimes_filter)')
-        crimes_map_title = ' '.join(crimes_filter)
+        list_of_crimes = [crime.capitalize() for crime in crimes_filter]
+        crimes_map_title = ' '.join(list_of_crimes)
+        
     else:
         crimes_map_title = 'All Crimes'
 
+    # apply start and end date
+    temp_df = crime_df.query('time_started >= @start_date and time_started <= @end_date')
+
     # create a dataframe that has count of number of crimes at each location
-    temp_df = crime_df.groupby(['latitude', 'longitude', 'location_of_occurrence'], as_index=False).size().sort_values(by='size', ascending=False)
+    temp_df = temp_df.groupby(['latitude', 'longitude', 'location_of_occurrence'], as_index=False).size().sort_values(by='size', ascending=False)
 
     # rename size column to n_crimes
     temp_df = temp_df.rename(columns={'size': 'n_crimes'})
 
-    # for sake of clearer visualization, filter out locations that have less than 3 crimes
-    temp_df = temp_df.query('n_crimes > 2')
+    # drop duplicate latitude and longitude, this should be cleaned in pandas
+    temp_df = temp_df.sort_values(by='n_crimes', ascending=False)
+    temp_df = temp_df.drop_duplicates(subset=['latitude', 'longitude'], keep='first')
 
     # new column in temp_df that contains all the info for hovering in map
-    temp_df['hover_info'] = 'Address: ' + temp_df.location_of_occurrence.astype(str) + '<br>' + 'Num of Crimes: ' + temp_df.n_crimes.astype(str)
+    temp_df['hover_info'] = 'Address: ' + temp_df.location_of_occurrence.astype(str) + '<br>' + 'Num of Incidents: ' + temp_df.n_crimes.astype(str)
+
+
 
     # Create heatmap of criminal activity
     fig = px.scatter_mapbox(
@@ -44,18 +56,146 @@ def create_map(crime_df, crimes_filter):
         color_discrete_sequence=["red"]
     )
 
-    fig.update_layout(width=800, height=600, title=f'Number of Crimes by Location 2019-2023 ({crimes_map_title})', title_x=0.5)
+    fig.update_layout(width=800, height=600, title=f'Number of Crimes by Location - {crimes_map_title}', title_x=0.5)
+
     return fig
+
+
+def create_area(crime_df, crimes_filter, start_date, end_date, time_period, time_period_options):
+
+    crime_df = crime_df.query('time_started >= "2020-01-01"')
+
+    # crime_df = crime_df.groupby(['year', 'month'], as_index=False).size()
+
+    # crime_df['start_date'] = crime_df.year.astype(str) + '-' + crime_df.month.astype(str)
+    
+    if crimes_filter:
+        crime_df = (
+            crime_df
+            .query('time_started >= @start_date and time_started <= @end_date and general_offense.isin(@crimes_filter)')
+            .groupby(pd.Grouper(key='time_started', freq=f'{time_period_options[time_period]}'))
+            .size()
+            .reset_index()
+            .rename(columns={0: 'count', 'time_started': 'period_ended'})
+        )
+
+
+    else:
+        crime_df = (
+            crime_df
+            .query('time_started >= @start_date and time_started <= @end_date')
+            .groupby(pd.Grouper(key='time_started', freq=f'{time_period_options[time_period]}'))
+            .size()
+            .reset_index()
+            .rename(columns={0: 'count', 'time_started': 'period_ended'})
+        )   
+
+    fig = px.area(
+        crime_df,
+        x='period_ended',
+        y='count'
+    )
+
+    fig.update_layout(
+        width=800, 
+        height=600,
+        title={
+            'text': 'Crime Over Time',
+            'x': 0.5,
+            'xanchor': 'center'
+        },
+        xaxis_title=time_period,
+        yaxis_title='Number of Incidents'
+        
+    )
+    return fig
+
+
+
 
 # load data 
 crime_df = load_data('data/crime-df.csv')
+date_min = pd.to_datetime('2019-01-01')
+date_max = pd.to_datetime('2023-12-31')
+min_default = crime_df.time_started.dt.date.min()
+max_default = crime_df.time_started.dt.date.max()
+
+# create sidebar menu with options
+selected = option_menu(
+    menu_title=None,
+    menu_icon='cast',
+    default_index=0,
+    options=['Crime Map', 'Crime Over Time', 'Crime Category', 'Crime by Location'],
+    orientation='horizontal',
+    icons=['pin-map', 'graph-up', 'filter-square'],
+    styles= {'container': {
+                'font-size': '12px'
+    }}
+)
+
 
 # define crime type options
 crime_options = crime_df.general_offense.value_counts().sort_values(ascending=False).index.tolist()
 
-# end user selects crimes they are interested in
-crimes_filter = st.multiselect('Choose crime category', options=crime_options)
+#  user selects crimes they are interested in
+crimes_filter = st.multiselect('Choose crime/incident category', options=crime_options)
 
-fig = create_map(crime_df, crimes_filter)
+# get date range
+start_date = st.date_input(label='Start Date', min_value=date_min, max_value=date_max, value=min_default, label_visibility='visible')
+end_date = st.date_input(label='End Date', min_value=date_min, max_value=date_max, value=max_default)
 
-st.plotly_chart(fig)
+if selected == 'Crime Map':
+
+    fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
+
+    st.plotly_chart(fig)
+
+if selected == 'Crime Over Time':
+
+    time_period_options = {'Year': 'Y', 'Month': 'M','Week': 'W', 'Day': 'D'}
+
+    time_period = st.selectbox(options=time_period_options.keys(), label='Time Period', index=list(time_period_options.keys()).index('Month'))
+
+    fig = create_area(crime_df, crimes_filter, start_date, end_date, time_period, time_period_options)
+
+    st.plotly_chart(fig)
+
+if selected == 'Crime Category':
+    st.write('Two or more crimes to compare')
+    if len(crimes_filter) >= 2:
+        crime_df = (crime_df
+                .query('time_started >= @start_date and time_started <= @end_date and general_offense.isin(@crimes_filter)')
+                .groupby('general_offense', as_index=False)
+                .size()
+                .sort_values(by='size', ascending=True)
+                )
+        fig = px.bar(crime_df, x='size', y='general_offense', orientation='h')
+        fig.update_traces(textposition='inside')
+        st.plotly_chart(fig)
+
+if selected == 'Crime by Location':
+
+    # this filters the available options for locations without typos, this should be cleaned in pandas
+    temp_df = crime_df.groupby(['latitude', 'longitude', 'location_of_occurrence'], as_index=False).size().sort_values(by='size', ascending=False)
+    temp_df = temp_df.rename(columns={'size': 'n_crimes'})
+    temp_df = temp_df.sort_values(by='n_crimes', ascending=False)
+    temp_df = temp_df.drop_duplicates(subset=['latitude', 'longitude'], keep='first')
+
+    # create location options
+    location_options = temp_df.location_of_occurrence.unique()
+
+    # multiselect of available locations
+    locations_filter = st.multiselect('Choose locations', options=location_options)
+    
+    # filter dataframe for crimes, locations, and dates from use input
+    crime_df = crime_df.query('general_offense.isin(@crimes_filter) and location_of_occurrence.isin(@locations_filter)')
+    crime_df = crime_df.query('time_started >= @start_date and time_started <= @end_date')
+
+    # rename column from size
+    crime_df = crime_df.groupby(['location_of_occurrence', 'general_offense'], as_index=False).size().sort_values(by='size', ascending=False)
+    crime_df = crime_df.rename(columns={'size': 'n_crimes'})
+    crime_df = crime_df.pivot(index='location_of_occurrence', columns='general_offense', values='n_crimes').fillna(0)
+    fig = px.imshow(crime_df
+                    )
+    
+    st.plotly_chart(fig)
