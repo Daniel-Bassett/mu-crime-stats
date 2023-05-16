@@ -177,7 +177,7 @@ if selected == 'Crime Over Time':
 
     fig = create_area(crime_df, crimes_filter, start_date, end_date, time_period, time_period_options)
 
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 if selected == 'Crime Category':
     st.write('Two or more crimes to compare')
@@ -190,7 +190,7 @@ if selected == 'Crime Category':
                 )
         fig = px.bar(crime_df, x='size', y='general_offense', orientation='h')
         fig.update_traces(textposition='inside')
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
 
 if selected == 'Crime by Location':
 
@@ -208,4 +208,4 @@ if selected == 'Crime by Location':
     
     fig = create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_date)
 
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
