@@ -97,8 +97,6 @@ def create_area(crime_df, crimes_filter, start_date, end_date, time_period, time
     )
 
     fig.update_layout(
-        width=800, 
-        height=600,
         title={
             'text': 'Crime Over Time',
             'x': 0.5,
@@ -121,8 +119,7 @@ def create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_da
     crime_df = crime_df.rename(columns={'size': 'n_crimes'})
     crime_df = crime_df.pivot(index='location_of_occurrence', columns='general_offense', values='n_crimes').fillna(0)
     fig = px.imshow(crime_df)
-    fig.update_layout(width=800, 
-                      height=600, 
+    fig.update_layout(
                       title=f'Crime by Location - Heatmap', 
                       title_x=0.5,
                       xaxis_title='location',
