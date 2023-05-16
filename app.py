@@ -56,7 +56,7 @@ def create_map(crime_df, crimes_filter, start_date, end_date):
         color_discrete_sequence=["red"]
     )
 
-    fig.update_layout(title=f'Number of Crimes by Location - {crimes_map_title}', title_x=0.5)
+    fig.update_layout(title=f'Number of Crimes by Location - {crimes_map_title}')
 
     return fig
 
