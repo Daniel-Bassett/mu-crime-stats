@@ -154,18 +154,23 @@ selected = option_menu(
 # define crime type options
 crime_options = crime_df.general_offense.value_counts().sort_values(ascending=False).index.tolist()
 
-#  user selects crimes they are interested in
-crimes_filter = st.multiselect('Choose crime/incident category', options=crime_options)
 
+start_col, end_col, crimes_col = st.columns([1, 1, 1])
 # get date range
-start_date = st.date_input(label='Start Date', min_value=date_min, max_value=date_max, value=min_default, label_visibility='visible')
-end_date = st.date_input(label='End Date', min_value=date_min, max_value=date_max, value=max_default)
+with start_col:
+    start_date = st.date_input(label='Start Date', min_value=date_min, max_value=date_max, value=min_default, label_visibility='visible')
+with end_col:
+    end_date = st.date_input(label='End Date', min_value=date_min, max_value=date_max, value=max_default)
+with crimes_col:
+    #  user selects crimes they are interested in
+    crimes_filter = st.multiselect('Choose crime/incident category', options=crime_options)
+
 
 if selected == 'Crime Map':
-
-    fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
-
-    st.plotly_chart(fig)
+    graph_container = st.container()
+    with graph_container:
+        fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
+        st.plotly_chart(fig)
 
 if selected == 'Crime Over Time':
 
