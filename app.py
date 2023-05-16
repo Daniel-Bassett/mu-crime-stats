@@ -167,7 +167,7 @@ with crimes_col:
 
 
 if selected == 'Crime Map':
-    graph_container = st.container()
+    graph_container = st.empty()
     with graph_container:
         fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
         st.plotly_chart(fig, use_container_width=True)
