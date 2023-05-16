@@ -56,7 +56,7 @@ def create_map(crime_df, crimes_filter, start_date, end_date):
         color_discrete_sequence=["red"]
     )
 
-    fig.update_layout(width=800, height=600, title=f'Number of Crimes by Location - {crimes_map_title}', title_x=0.5)
+    fig.update_layout(title=f'Number of Crimes by Location - {crimes_map_title}', title_x=0.5)
 
     return fig
 
@@ -167,7 +167,7 @@ with crimes_col:
 
 
 if selected == 'Crime Map':
-    graph_container = st.empty()
+    graph_container = st.container()
     with graph_container:
         fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
         st.plotly_chart(fig, use_container_width=True)
