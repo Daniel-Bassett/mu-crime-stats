@@ -90,7 +90,7 @@ def create_area(crime_df, crimes_filter, start_date, end_date, time_period, time
             .rename(columns={0: 'count', 'time_started': 'period_ended'})
         )   
 
-    fig = px.area(
+    fig = px.bar(
         crime_df,
         x='period_ended',
         y='count'
@@ -155,6 +155,7 @@ graph_container = st.container()
 
 input_col1, input_col2, input_col3, input_col4 = st.columns([4, 4, 4, 4])
 
+
 with input_col1:
     # get date range
     start_date = st.date_input(label='Start Date', min_value=date_min, max_value=date_max, value=min_default, label_visibility='visible')
@@ -163,6 +164,8 @@ with input_col2:
 with input_col3:
     #  user selects crimes they are interested in
     crimes_filter = st.multiselect('Choose crime type', options=crime_options)
+with input_col4:
+    input_slot = st.container()
 
 if selected == 'Crime Map':
     with graph_container:
@@ -205,7 +208,7 @@ if selected == 'Crime by Location':
     # create location options
     location_options = temp_df.location_of_occurrence.unique()
 
-    with input_slot:
+    with input_col4:
         # multiselect of available locations
         locations_filter = st.multiselect('Choose locations', options=location_options)
     
