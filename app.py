@@ -118,10 +118,9 @@ def create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_da
     crime_df = crime_df.groupby(['location_of_occurrence', 'general_offense'], as_index=False).size().sort_values(by='size', ascending=False)
     crime_df = crime_df.rename(columns={'size': 'n_crimes'})
     crime_df = crime_df.pivot(index='location_of_occurrence', columns='general_offense', values='n_crimes').fillna(0)
-    fig = px.imshow(crime_df)
+    fig = px.imshow(crime_df, color_continuous_scale=['white', 'red'])
     fig.update_layout(
                       title=f'Crime by Location - Heatmap', 
-                      title_x=0.5,
                       xaxis_title='location',
                       yaxis_title='crime category'
                       )
@@ -151,33 +150,36 @@ selected = option_menu(
 # define crime type options
 crime_options = crime_df.general_offense.value_counts().sort_values(ascending=False).index.tolist()
 
-input_col, graph_col = st.columns([4, 8])
-with input_col:
+graph_container = st.container()
 
+
+input_col1, input_col2, input_col3, input_col4 = st.columns([4, 4, 4, 4])
+
+with input_col1:
     # get date range
     start_date = st.date_input(label='Start Date', min_value=date_min, max_value=date_max, value=min_default, label_visibility='visible')
-
+with input_col2:
     end_date = st.date_input(label='End Date', min_value=date_min, max_value=date_max, value=max_default)
-
+with input_col3:
     #  user selects crimes they are interested in
-    crimes_filter = st.multiselect('Choose crime/incident category', options=crime_options)
+    crimes_filter = st.multiselect('Choose crime type', options=crime_options)
 
-with graph_col:
-    if selected == 'Crime Map':
-        graph_container = st.container()
-        with graph_container:
-            fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
-            st.plotly_chart(fig, use_container_width=True)
+if selected == 'Crime Map':
+    with graph_container:
+        fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
+        st.plotly_chart(fig, use_container_width=True)
+
 
 if selected == 'Crime Over Time':
 
     time_period_options = {'Year': 'Y', 'Month': 'M','Week': 'W', 'Day': 'D'}
-
-    time_period = st.selectbox(options=time_period_options.keys(), label='Time Period', index=list(time_period_options.keys()).index('Month'))
+    with input_col4:
+        time_period = st.selectbox(options=time_period_options.keys(), label='Time Period', index=list(time_period_options.keys()).index('Month'))
 
     fig = create_area(crime_df, crimes_filter, start_date, end_date, time_period, time_period_options)
-
-    st.plotly_chart(fig, use_container_width=True)
+    
+    with graph_container:
+        st.plotly_chart(fig, use_container_width=True)
 
 if selected == 'Crime Category':
     st.write('Two or more crimes to compare')
@@ -203,9 +205,11 @@ if selected == 'Crime by Location':
     # create location options
     location_options = temp_df.location_of_occurrence.unique()
 
-    # multiselect of available locations
-    locations_filter = st.multiselect('Choose locations', options=location_options)
+    with input_slot:
+        # multiselect of available locations
+        locations_filter = st.multiselect('Choose locations', options=location_options)
     
     fig = create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_date)
 
-    st.plotly_chart(fig, use_container_width=True)
+    with graph_container:
+        st.plotly_chart(fig, use_container_width=True)
