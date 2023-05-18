@@ -121,8 +121,8 @@ def create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_da
     fig = px.imshow(crime_df, color_continuous_scale=['pink', 'red'])
     fig.update_layout(
                       title=f'Crime by Location - Heatmap', 
-                      xaxis_title='location',
-                      yaxis_title='crime category'
+                      xaxis_title='crime category',
+                      yaxis_title='location'
                       )
     return fig
 
