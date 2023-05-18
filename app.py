@@ -138,7 +138,7 @@ selected = option_menu(
     menu_title=None,
     menu_icon='cast',
     default_index=0,
-    options=['Crime Map', 'Crime Over Time', 'Crime Category', 'Crime by Location'],
+    options=['Crime Map', 'Crime Over Time', 'Crime by Location'],
     orientation='horizontal',
     icons=['pin-map', 'graph-up', 'filter-square'],
     styles= {'container': {
@@ -150,11 +150,9 @@ selected = option_menu(
 # define crime type options
 crime_options = crime_df.general_offense.value_counts().sort_values(ascending=False).index.tolist()
 
+# containers, columns
 graph_container = st.container()
-
-
 input_col1, input_col2, input_col3, input_col4 = st.columns([4, 4, 4, 4])
-
 
 with input_col1:
     # get date range
@@ -167,14 +165,12 @@ with input_col3:
 with input_col4:
     input_slot = st.container()
 
+
 if selected == 'Crime Map':
     with graph_container:
         fig = create_map(crime_df, crimes_filter, start_date=start_date, end_date=end_date)
         st.plotly_chart(fig, use_container_width=True)
-
-
 if selected == 'Crime Over Time':
-
     time_period_options = {'Year': 'Y', 'Month': 'M','Week': 'W', 'Day': 'D'}
     with input_col4:
         time_period = st.selectbox(options=time_period_options.keys(), label='Time Period', index=list(time_period_options.keys()).index('Month'))
@@ -183,22 +179,7 @@ if selected == 'Crime Over Time':
     
     with graph_container:
         st.plotly_chart(fig, use_container_width=True)
-
-if selected == 'Crime Category':
-    st.write('Two or more crimes to compare')
-    if len(crimes_filter) >= 2:
-        crime_df = (crime_df
-                .query('time_started >= @start_date and time_started <= @end_date and general_offense.isin(@crimes_filter)')
-                .groupby('general_offense', as_index=False)
-                .size()
-                .sort_values(by='size', ascending=True)
-                )
-        fig = px.bar(crime_df, x='size', y='general_offense', orientation='h')
-        fig.update_traces(textposition='inside')
-        st.plotly_chart(fig, use_container_width=True)
-
 if selected == 'Crime by Location':
-
     # this filters the available options for locations without typos, this should be cleaned in pandas
     temp_df = crime_df.groupby(['latitude', 'longitude', 'location_of_occurrence'], as_index=False).size().sort_values(by='size', ascending=False)
     temp_df = temp_df.rename(columns={'size': 'n_crimes'})
