@@ -5,7 +5,7 @@ This is a brief exploration of the publicly available <a href='http://muop-mupdr
 The resulting data and analysis were then used to create a web application showing the crime trends in around the MU campus. The web app is not complete, but there are some interesting visualizations 
 currently available for data between October 2019 and April 2023. The unfinished app can be found <a href='https://mu-crime-stats.streamlit.app/'>here</a>.
 
-## Phases
+## Key Steps
 ### Data Scraping
 - <a href='https://github.com/Daniel-Bassett/mu-crime-stats/blob/master/scrapers/mu_crime_scraper.ipynb'>Scraped</a> the MU crime log.
 - <a href='https://github.com/Daniel-Bassett/mu-crime-stats/blob/master/wrangler/data_wrangler.ipynb'>Cleaned</a> the crime log in preparation for geocoding.
