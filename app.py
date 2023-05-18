@@ -118,7 +118,7 @@ def create_heatmap(crime_df, crimes_filter, locations_filter, start_date, end_da
     crime_df = crime_df.groupby(['location_of_occurrence', 'general_offense'], as_index=False).size().sort_values(by='size', ascending=False)
     crime_df = crime_df.rename(columns={'size': 'n_crimes'})
     crime_df = crime_df.pivot(index='location_of_occurrence', columns='general_offense', values='n_crimes').fillna(0)
-    fig = px.imshow(crime_df, color_continuous_scale=['white', 'red'])
+    fig = px.imshow(crime_df, color_continuous_scale=['pink', 'red'])
     fig.update_layout(
                       title=f'Crime by Location - Heatmap', 
                       xaxis_title='location',
